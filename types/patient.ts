@@ -1,4 +1,5 @@
 export interface PatientBasic {
+  _id: Key | null | undefined;
   id: string;
   name: string;
   room: string;
@@ -10,11 +11,14 @@ export interface PatientBasic {
   acuityLevel: 1 | 2 | 3 | 4 | 5;
   lastVitalsTime?: string;
   nextMedTime?: string;
-  hasAlerts: boolean;
-  isPendingDischarge: boolean;
-  requiresFollowUp: boolean;
-  nursingNotes: NursingNote[];
+  hasAlerts?: boolean;
+  requiresFollowUp?: boolean;
+  isPendingDischarge?: boolean;
+  hasCriticalLabs?: boolean;
+  requiresContactPrecautions?: boolean;
+  nursingNotes: string[];
   age?: number;
+  maritalStatus?: string;
   gender?: string;
   emergencyContact?: {
     name: string;
@@ -48,7 +52,7 @@ export interface PatientVitals {
 }
 
 export interface PatientMedication {
-  id: string;
+  _id: string;
   name: string;
   dosage: string;
   route: string;
@@ -62,7 +66,7 @@ export interface PatientMedication {
   addedAt: string;
 }
 
-export interface PatientDetails extends PatientBasic {
+export interface PatientDetails extends Omit<PatientBasic, "nursingNotes"> {
   demographics: {
     dateOfBirth: string;
     age: number;
@@ -128,6 +132,7 @@ export interface AddPatientRequest {
   room: string;
   primaryDiagnosis: string;
   age: number;
+  maritalStatus?: string;
   gender: string;
   riskLevel: "low" | "medium" | "high" | "critical";
   acuityLevel: 1 | 2 | 3 | 4 | 5;
@@ -143,6 +148,8 @@ export interface AddPatientRequest {
   hasAlerts?: boolean;
   requiresFollowUp?: boolean;
   isPendingDischarge?: boolean;
+  hasCriticalLabs?: boolean;
+  requiresContactPrecautions?: boolean;
 }
 
 export interface UpdateVitalsRequest {
@@ -167,3 +174,19 @@ export interface UpdateMedicationRequest {
   nurseName: string;
   notes?: string;
 }
+
+// In your POST /api/patients route
+const newPatient = await Patient.create({
+  ...data,
+  demographics: {
+    age: data.age,
+    gender: data.gender,
+    maritalStatus: data.maritalStatus,
+    // Add other fields as needed, or provide defaults
+    dateOfBirth: data.dateOfBirth || "",
+    occupation: data.occupation || "",
+    address: data.address || "",
+    religion: data.religion || "",
+  },
+  // Optionally, keep top-level fields for backward compatibility
+});

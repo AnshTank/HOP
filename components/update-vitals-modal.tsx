@@ -1,71 +1,83 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { X, Save, Activity } from "lucide-react"
-import type { PatientVitals } from "@/types/patient"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { X, Save, Activity } from "lucide-react";
+import type { PatientVitals } from "@/types/patient";
 
 interface UpdateVitalsModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onUpdateVitals: (vitals: Partial<PatientVitals>, nurseInitials: string, nurseName: string) => Promise<void>
-  currentVitals: PatientVitals
+  isOpen: boolean;
+  onClose: () => void;
+  onUpdateVitals: (
+    vitals: Partial<PatientVitals>,
+    nurseInitials: string,
+    nurseName: string
+  ) => Promise<void>;
+  currentVitals: PatientVitals;
 }
 
-function UpdateVitalsModal({ isOpen, onClose, onUpdateVitals, currentVitals }: UpdateVitalsModalProps) {
-  const [loading, setLoading] = useState(false)
-  const [nurseInitials, setNurseInitials] = useState("")
-  const [nurseName, setNurseName] = useState("")
+function UpdateVitalsModal({
+  isOpen,
+  onClose,
+  onUpdateVitals,
+  currentVitals = {},
+}: UpdateVitalsModalProps & { currentVitals?: PatientVitals }) {
+  const [loading, setLoading] = useState(false);
+  const [nurseInitials, setNurseInitials] = useState("");
+  const [nurseName, setNurseName] = useState("");
   const [vitals, setVitals] = useState<Partial<PatientVitals>>({
-    temperature: currentVitals.temperature || undefined,
-    heartRate: currentVitals.heartRate || undefined,
-    respiratoryRate: currentVitals.respiratoryRate || undefined,
-    oxygenSaturation: currentVitals.oxygenSaturation || undefined,
-    painLevel: currentVitals.painLevel || undefined,
-    weight: currentVitals.weight || undefined,
-    height: currentVitals.height || "",
-    bloodPressure: currentVitals.bloodPressure || { systolic: undefined, diastolic: undefined },
-  })
+    temperature: currentVitals?.temperature || undefined,
+    heartRate: currentVitals?.heartRate || undefined,
+    respiratoryRate: currentVitals?.respiratoryRate || undefined,
+    oxygenSaturation: currentVitals?.oxygenSaturation || undefined,
+    painLevel: currentVitals?.painLevel || undefined,
+    weight: currentVitals?.weight || undefined,
+    height: currentVitals?.height || "",
+    bloodPressure: currentVitals?.bloodPressure,
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!nurseInitials.trim() || !nurseName.trim()) {
-      alert("Please enter your initials and full name")
-      return
+      alert("Please enter your initials and full name");
+      return;
     }
 
-    setLoading(true)
+    setLoading(true);
     try {
       // Filter out empty values
-      const filteredVitals: Partial<PatientVitals> = {}
+      const filteredVitals: Partial<PatientVitals> = {};
 
-      if (vitals.temperature) filteredVitals.temperature = vitals.temperature
-      if (vitals.heartRate) filteredVitals.heartRate = vitals.heartRate
-      if (vitals.respiratoryRate) filteredVitals.respiratoryRate = vitals.respiratoryRate
-      if (vitals.oxygenSaturation) filteredVitals.oxygenSaturation = vitals.oxygenSaturation
-      if (vitals.painLevel !== undefined) filteredVitals.painLevel = vitals.painLevel
-      if (vitals.weight) filteredVitals.weight = vitals.weight
-      if (vitals.height) filteredVitals.height = vitals.height
+      if (vitals.temperature) filteredVitals.temperature = vitals.temperature;
+      if (vitals.heartRate) filteredVitals.heartRate = vitals.heartRate;
+      if (vitals.respiratoryRate)
+        filteredVitals.respiratoryRate = vitals.respiratoryRate;
+      if (vitals.oxygenSaturation)
+        filteredVitals.oxygenSaturation = vitals.oxygenSaturation;
+      if (vitals.painLevel !== undefined)
+        filteredVitals.painLevel = vitals.painLevel;
+      if (vitals.weight) filteredVitals.weight = vitals.weight;
+      if (vitals.height) filteredVitals.height = vitals.height;
       if (vitals.bloodPressure?.systolic && vitals.bloodPressure?.diastolic) {
-        filteredVitals.bloodPressure = vitals.bloodPressure
+        filteredVitals.bloodPressure = vitals.bloodPressure;
       }
 
-      await onUpdateVitals(filteredVitals, nurseInitials, nurseName)
-      onClose()
+      await onUpdateVitals(filteredVitals, nurseInitials, nurseName);
+      onClose();
     } catch (error) {
-      console.error("Error updating vitals:", error)
-      alert("Failed to update vitals. Please try again.")
+      console.error("Error updating vitals:", error);
+      alert("Failed to update vitals. Please try again.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center overflow-y-auto">
@@ -75,7 +87,11 @@ function UpdateVitalsModal({ isOpen, onClose, onUpdateVitals, currentVitals }: U
             <Activity className="w-6 h-6" />
             Update Vital Signs
           </h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-800" disabled={loading}>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-800"
+            disabled={loading}
+          >
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -118,7 +134,9 @@ function UpdateVitalsModal({ isOpen, onClose, onUpdateVitals, currentVitals }: U
                 onChange={(e) =>
                   setVitals((prev) => ({
                     ...prev,
-                    temperature: e.target.value ? Number.parseFloat(e.target.value) : undefined,
+                    temperature: e.target.value
+                      ? Number.parseFloat(e.target.value)
+                      : undefined,
                   }))
                 }
                 placeholder="98.6"
@@ -134,7 +152,9 @@ function UpdateVitalsModal({ isOpen, onClose, onUpdateVitals, currentVitals }: U
                 onChange={(e) =>
                   setVitals((prev) => ({
                     ...prev,
-                    heartRate: e.target.value ? Number.parseInt(e.target.value) : undefined,
+                    heartRate: e.target.value
+                      ? Number.parseInt(e.target.value)
+                      : undefined,
                   }))
                 }
                 placeholder="72"
@@ -146,40 +166,68 @@ function UpdateVitalsModal({ isOpen, onClose, onUpdateVitals, currentVitals }: U
               <div className="flex gap-2">
                 <Input
                   type="number"
-                  value={vitals.bloodPressure?.systolic || ""}
-                  onChange={(e) =>
+                  value={vitals.bloodPressure?.systolic ?? ""}
+                  onChange={(e) => {
+                    const systolic = e.target.value
+                      ? Number.parseInt(e.target.value)
+                      : undefined;
+                    const diastolic = vitals.bloodPressure?.diastolic;
                     setVitals((prev) => ({
                       ...prev,
-                      bloodPressure: {
-                        ...prev.bloodPressure,
-                        systolic: e.target.value ? Number.parseInt(e.target.value) : undefined,
-                        diastolic: prev.bloodPressure?.diastolic || undefined,
-                      },
-                    }))
-                  }
+                      bloodPressure:
+                        systolic !== undefined && diastolic !== undefined
+                          ? { systolic, diastolic }
+                          : systolic !== undefined
+                          ? {
+                              systolic,
+                              diastolic: undefined as unknown as number,
+                            }
+                          : diastolic !== undefined
+                          ? {
+                              systolic: undefined as unknown as number,
+                              diastolic,
+                            }
+                          : undefined,
+                    }));
+                  }}
                   placeholder="120"
                 />
                 <span className="flex items-center">/</span>
                 <Input
                   type="number"
-                  value={vitals.bloodPressure?.diastolic || ""}
-                  onChange={(e) =>
+                  value={vitals.bloodPressure?.diastolic ?? ""}
+                  onChange={(e) => {
+                    const diastolic = e.target.value
+                      ? Number.parseInt(e.target.value)
+                      : undefined;
+                    const systolic = vitals.bloodPressure?.systolic;
                     setVitals((prev) => ({
                       ...prev,
-                      bloodPressure: {
-                        ...prev.bloodPressure,
-                        systolic: prev.bloodPressure?.systolic || undefined,
-                        diastolic: e.target.value ? Number.parseInt(e.target.value) : undefined,
-                      },
-                    }))
-                  }
+                      bloodPressure:
+                        systolic !== undefined && diastolic !== undefined
+                          ? { systolic, diastolic }
+                          : systolic !== undefined
+                          ? {
+                              systolic,
+                              diastolic: undefined as unknown as number,
+                            }
+                          : diastolic !== undefined
+                          ? {
+                              systolic: undefined as unknown as number,
+                              diastolic,
+                            }
+                          : undefined,
+                    }));
+                  }}
                   placeholder="80"
                 />
               </div>
             </div>
 
             <div>
-              <Label htmlFor="respiratoryRate">Respiratory Rate (breaths/min)</Label>
+              <Label htmlFor="respiratoryRate">
+                Respiratory Rate (breaths/min)
+              </Label>
               <Input
                 id="respiratoryRate"
                 type="number"
@@ -187,7 +235,9 @@ function UpdateVitalsModal({ isOpen, onClose, onUpdateVitals, currentVitals }: U
                 onChange={(e) =>
                   setVitals((prev) => ({
                     ...prev,
-                    respiratoryRate: e.target.value ? Number.parseInt(e.target.value) : undefined,
+                    respiratoryRate: e.target.value
+                      ? Number.parseInt(e.target.value)
+                      : undefined,
                   }))
                 }
                 placeholder="16"
@@ -203,7 +253,9 @@ function UpdateVitalsModal({ isOpen, onClose, onUpdateVitals, currentVitals }: U
                 onChange={(e) =>
                   setVitals((prev) => ({
                     ...prev,
-                    oxygenSaturation: e.target.value ? Number.parseInt(e.target.value) : undefined,
+                    oxygenSaturation: e.target.value
+                      ? Number.parseInt(e.target.value)
+                      : undefined,
                   }))
                 }
                 placeholder="98"
@@ -219,7 +271,12 @@ function UpdateVitalsModal({ isOpen, onClose, onUpdateVitals, currentVitals }: U
                 max="10"
                 value={vitals.painLevel !== undefined ? vitals.painLevel : ""}
                 onChange={(e) =>
-                  setVitals((prev) => ({ ...prev, painLevel: e.target.value ? Number.parseInt(e.target.value) : 0 }))
+                  setVitals((prev) => ({
+                    ...prev,
+                    painLevel: e.target.value
+                      ? Number.parseInt(e.target.value)
+                      : 0,
+                  }))
                 }
                 placeholder="0"
               />
@@ -235,7 +292,9 @@ function UpdateVitalsModal({ isOpen, onClose, onUpdateVitals, currentVitals }: U
                 onChange={(e) =>
                   setVitals((prev) => ({
                     ...prev,
-                    weight: e.target.value ? Number.parseFloat(e.target.value) : undefined,
+                    weight: e.target.value
+                      ? Number.parseFloat(e.target.value)
+                      : undefined,
                   }))
                 }
                 placeholder="150"
@@ -247,22 +306,34 @@ function UpdateVitalsModal({ isOpen, onClose, onUpdateVitals, currentVitals }: U
               <Input
                 id="height"
                 value={vitals.height || ""}
-                onChange={(e) => setVitals((prev) => ({ ...prev, height: e.target.value }))}
+                onChange={(e) =>
+                  setVitals((prev) => ({ ...prev, height: e.target.value }))
+                }
                 placeholder="5'6&quot;"
               />
             </div>
           </div>
 
           <div className="text-sm text-gray-600 bg-yellow-50 p-3 rounded-lg">
-            <strong>Note:</strong> You can leave any field empty if not measured. Only filled fields will be updated.
+            <strong>Note:</strong> You can leave any field empty if not
+            measured. Only filled fields will be updated.
           </div>
 
           {/* Submit Buttons */}
           <div className="flex justify-end gap-4 pt-6 border-t">
-            <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              disabled={loading}
+            >
               Cancel
             </Button>
-            <Button type="submit" className="bg-blue-600 text-white hover:bg-blue-700" disabled={loading}>
+            <Button
+              type="submit"
+              className="bg-blue-600 text-white hover:bg-blue-700"
+              disabled={loading}
+            >
               <Save className="w-5 h-5 mr-1" />
               {loading ? "Updating..." : "Update Vitals"}
             </Button>
@@ -270,10 +341,10 @@ function UpdateVitalsModal({ isOpen, onClose, onUpdateVitals, currentVitals }: U
         </form>
       </div>
     </div>
-  )
+  );
 }
 
-export default UpdateVitalsModal
+export default UpdateVitalsModal;
 
 // Also keep the named export for flexibility
-export { UpdateVitalsModal }
+export { UpdateVitalsModal };

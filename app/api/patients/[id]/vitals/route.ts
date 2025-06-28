@@ -1,32 +1,53 @@
-import { type NextRequest, NextResponse } from "next/server"
-import type { UpdateVitalsRequest, PatientDetails, ActivityLog } from "@/types/patient"
+import { type NextRequest, NextResponse } from "next/server";
+import { connectDB } from "@/backend/Users"; // Update path if needed
+import Patient from "@/backend/models/PatientSchema"; // Update path if needed
+import Vitals from "@/backend/models/VitalsSchema"; // Update path if needed
+import "@/backend/models/ActivityLogSchema"; // <-- Add this line
 
-// In-memory storage (in production, use a real database)
-const patientsData = new Map<string, PatientDetails>()
-
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
-    const patientId = params.id
-    const data: Omit<UpdateVitalsRequest, "patientId"> = await request.json()
+    await connectDB();
+    const { id: patientId } = await params;
+    const data = await request.json();
 
-    // Get current patient data
-    const response = await fetch(`${request.nextUrl.origin}/api/patients/${patientId}`)
-    if (!response.ok) {
-      return NextResponse.json({ error: "Patient not found" }, { status: 404 })
+    // Find patient
+    const patient = await Patient.findById(patientId)
+      .populate("vitals")
+      .populate("activityLog");
+    if (!patient) {
+      return NextResponse.json({ error: "Patient not found" }, { status: 404 });
     }
 
-    const patient: PatientDetails = await response.json()
-
-    // Update vitals
-    const updatedVitals = {
-      ...patient.vitals,
-      ...data.vitals,
-      lastTaken: new Date().toISOString(),
-      takenBy: data.nurseName,
+    // Update or create vitals document
+    let updatedVitals;
+    if (patient.vitals) {
+      updatedVitals = await Vitals.findByIdAndUpdate(
+        patient.vitals._id,
+        {
+          ...data.vitals,
+          lastTaken: new Date().toISOString(),
+          takenBy: "", // Clear nurse value first
+        },
+        { new: true }
+      );
+      // Now update with the new nurse name
+      updatedVitals.takenBy = data.nurseName;
+      await updatedVitals.save();
+    } else {
+      updatedVitals = await Vitals.create({
+        ...data.vitals,
+        lastTaken: new Date().toISOString(),
+        takenBy: data.nurseName,
+      });
+      patient.vitals = updatedVitals._id;
+      await patient.save(); // <-- Save immediately after assigning vitals
     }
 
     // Create activity log entry
-    const newActivity: ActivityLog = {
+    const newActivity = {
       id: Date.now().toString(),
       timestamp: new Date().toISOString(),
       nurse: `${data.nurseName} (${data.nurseInitials})`,
@@ -34,36 +55,45 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       category: "vitals",
       details: `Updated vitals: ${Object.entries(data.vitals)
         .map(([key, value]) => {
-          if (key === "bloodPressure" && value) {
-            return `BP: ${value.systolic}/${value.diastolic}`
+          if (
+            key === "bloodPressure" &&
+            value &&
+            typeof value === "object" &&
+            "systolic" in value &&
+            "diastolic" in value
+          ) {
+            return `BP: ${value.systolic}/${value.diastolic}`;
           }
-          return `${key}: ${value}`
+          return `${key}: ${value}`;
         })
         .join(", ")}`,
       priority: "medium",
-    }
+    };
 
-    // Update patient data
-    const updatedPatient = {
-      ...patient,
-      vitals: updatedVitals,
-      activityLog: [newActivity, ...patient.activityLog],
-      lastModified: {
-        by: `${data.nurseName} (${data.nurseInitials})`,
-        at: new Date().toISOString(),
-        changes: ["Updated vital signs"],
-      },
-    }
+    // Update patient with new vitals and activity log
+    patient.activityLog.unshift(newActivity);
+    patient.lastModified = {
+      by: `${data.nurseName} (${data.nurseInitials})`,
+      at: new Date().toISOString(),
+      changes: ["Updated vital signs"],
+    };
+    await patient.save();
 
-    // Store updated data
-    patientsData.set(patientId, updatedPatient)
+    // Re-fetch the patient with populated vitals and activityLog
+    const updatedPatient = await Patient.findById(patientId)
+      .populate("vitals")
+      .populate("activityLog");
 
     return NextResponse.json({
       success: true,
       patient: updatedPatient,
-    })
+      vitals: updatedVitals,
+    });
   } catch (error) {
-    console.error("Error updating vitals:", error)
-    return NextResponse.json({ error: "Failed to update vitals" }, { status: 500 })
+    console.error("Error updating vitals:", error);
+    return NextResponse.json(
+      { error: "Failed to update vitals" },
+      { status: 500 }
+    );
   }
 }

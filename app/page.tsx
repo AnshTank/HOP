@@ -57,7 +57,19 @@ export default function NurseShiftCompanion() {
       }
       const data = await response.json();
       setPatients(data.patients);
-      setPatientStatuses(data.statuses);
+
+      // Generate empty statuses for each patient
+      const statuses: Record<string, PatientStatus> = {};
+      data.patients.forEach((p: any) => {
+        statuses[p._id] = {
+          hasNewOrders: false,
+          hasCriticalLabs: false,
+          hasUnreadMessages: false,
+          painLevel: 0,
+          mobilityStatus: "independent",
+        };
+      });
+      setPatientStatuses(statuses);
     } catch (error) {
       console.error("Error fetching patients:", error);
     } finally {
@@ -265,22 +277,23 @@ export default function NurseShiftCompanion() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 auto-rows-fr">
             {getVisiblePatients().map((patient) => (
               <WarmPatientCard
-                key={patient.id}
+                key={patient._id}
                 patient={patient}
-                status={
-                  patientStatuses[patient.id] || {
-                    hasNewOrders: false,
-                    hasCriticalLabs: false,
-                    hasUnreadMessages: false,
-                    painLevel: 0,
-                    mobilityStatus: "independent",
-                  }
-                }
-                isSelected={selectedPatient?.id === patient.id}
+                status={{
+                  hasNewOrders: false,
+                  hasCriticalLabs: false,
+                  hasUnreadMessages: false,
+                  painLevel: 0,
+                  mobilityStatus: "independent",
+                }}
+                isSelected={selectedPatient?._id === patient._id}
                 onSelect={() => setSelectedPatient(patient)}
                 onStartHandoff={() => {
-                  console.log("Navigating to patient details for:", patient.id);
-                  router.push(`/patient-details/${patient.id}`);
+                  console.log(
+                    "Navigating to patient details for:",
+                    patient._id
+                  );
+                  router.push(`/patient-details/${patient._id}`);
                 }}
               />
             ))}

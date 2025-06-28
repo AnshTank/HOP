@@ -21,6 +21,7 @@ export const mockPatients: PatientBasic[] = [
     requiresFollowUp: true,
     nursingNotes: ["Patient admitted for cardiac surgery monitoring"],
     age: 59,
+    maritalStatus: "Widowed",
     gender: "Female",
     emergencyContact: {
       name: "Jane Johnson",
@@ -42,6 +43,7 @@ export const mockPatients: PatientBasic[] = [
     requiresFollowUp: false,
     nursingNotes: ["Patient admitted with pneumonia"],
     age: 45,
+    maritalStatus: "Married",
     gender: "Male",
     emergencyContact: {
       name: "Lisa Chen",
@@ -63,6 +65,7 @@ export const mockPatients: PatientBasic[] = [
     requiresFollowUp: true,
     nursingNotes: ["Patient admitted post-stroke"],
     age: 67,
+    maritalStatus: "Unmarried",
     gender: "Female",
     emergencyContact: {
       name: "Carlos Rodriguez",
@@ -210,7 +213,7 @@ export const getCriticalCount = (patients: PatientBasic[]) => {
 export const getShiftStatus = () => {
   const now = new Date();
   const hour = now.getHours();
-  if (hour >= 7 && hour < 19) return "day";
-  if (hour >= 19 && hour < 23) return "evening";
+  if (hour >= 6 && hour < 14) return "day";
+  if (hour >= 14 && hour < 22) return "evening";
   return "night";
 };

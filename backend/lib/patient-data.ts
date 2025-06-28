@@ -1,8 +1,13 @@
-import type { PatientBasic, PatientStatus, PatientDetails } from "@/frontend/types/patient"
+import type {
+  PatientBasic,
+  PatientStatus,
+  PatientDetails,
+} from "@/types/patient";
 
 // Centralized patient data - initially with minimal vitals
 export const mockPatients: PatientBasic[] = [
   {
+    _id: "1",
     id: "1",
     name: "Sarah Johnson",
     room: "ICU-101",
@@ -13,6 +18,8 @@ export const mockPatients: PatientBasic[] = [
     isolationStatus: "Contact Precautions",
     acuityLevel: 5,
     hasAlerts: true,
+    hasCriticalLabs: true,
+    requiresContactPrecautions: true,
     isPendingDischarge: false,
     requiresFollowUp: true,
     nursingNotes: ["Patient admitted for cardiac surgery monitoring"],
@@ -25,6 +32,7 @@ export const mockPatients: PatientBasic[] = [
     },
   },
   {
+    _id: "2",
     id: "2",
     name: "Michael Chen",
     room: "Med-205",
@@ -46,6 +54,7 @@ export const mockPatients: PatientBasic[] = [
     },
   },
   {
+    _id: "3",
     id: "3",
     name: "Emma Rodriguez",
     room: "ICU-103",
@@ -66,7 +75,7 @@ export const mockPatients: PatientBasic[] = [
       phone: "(555) 456-7890",
     },
   },
-]
+];
 
 export const mockPatientStatuses: Record<string, PatientStatus> = {
   "1": {
@@ -90,29 +99,47 @@ export const mockPatientStatuses: Record<string, PatientStatus> = {
     painLevel: 0,
     mobilityStatus: "assistance",
   },
-}
+};
 
 // Generate comprehensive patient details with empty vitals initially
-export const generatePatientDetails = (patientId: string, allPatients?: PatientBasic[]): PatientDetails | null => {
-  const patientsToSearch = allPatients || mockPatients
-  const patient = patientsToSearch.find((p) => p.id === patientId)
-  if (!patient) return null
+export const generatePatientDetails = (
+  patientId: string,
+  allPatients?: PatientBasic[]
+): PatientDetails | null => {
+  const patientsToSearch = allPatients || mockPatients;
+  const patient = patientsToSearch.find((p) => p.id === patientId);
+  if (!patient) return null;
 
-  const baseTime = Date.now()
+  const baseTime = Date.now();
 
   return {
     ...patient,
     demographics: {
       dateOfBirth: patient.age
-        ? new Date(Date.now() - patient.age * 365.25 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
+        ? new Date(Date.now() - patient.age * 365.25 * 24 * 60 * 60 * 1000)
+            .toISOString()
+            .split("T")[0]
         : "1970-01-01",
       age: patient.age || 50,
       gender: patient.gender || "Unknown",
-      maritalStatus: ["Single", "Married", "Divorced", "Widowed"][Math.floor(Math.random() * 4)],
-      occupation: ["Teacher", "Engineer", "Nurse", "Retired", "Student"][Math.floor(Math.random() * 5)],
-      address: `${Math.floor(Math.random() * 9999)} Main Street, Springfield, IL 62701`,
+      maritalStatus: ["Single", "Married", "Divorced", "Widowed"][
+        Math.floor(Math.random() * 4)
+      ],
+      occupation: ["Teacher", "Engineer", "Nurse", "Retired", "Student"][
+        Math.floor(Math.random() * 5)
+      ],
+      address: `${Math.floor(
+        Math.random() * 9999
+      )} Main Street, Springfield, IL 62701`,
       preferredLanguage: "English",
-      religion: ["Christian", "Catholic", "Jewish", "Muslim", "Buddhist", "Other"][Math.floor(Math.random() * 6)],
+      religion: [
+        "Christian",
+        "Catholic",
+        "Jewish",
+        "Muslim",
+        "Buddhist",
+        "Other",
+      ][Math.floor(Math.random() * 6)],
     },
     emergencyContact: patient.emergencyContact || {
       name: "Emergency Contact",
@@ -120,7 +147,9 @@ export const generatePatientDetails = (patientId: string, allPatients?: PatientB
       phone: "(555) 000-0000",
     },
     insurance: {
-      provider: ["Blue Cross Blue Shield", "Aetna", "Cigna", "UnitedHealth"][Math.floor(Math.random() * 4)],
+      provider: ["Blue Cross Blue Shield", "Aetna", "Cigna", "UnitedHealth"][
+        Math.floor(Math.random() * 4)
+      ],
       policyNumber: `POL${patient.id}${Math.floor(Math.random() * 1000000)}`,
       groupNumber: `GRP${patient.id}${Math.floor(Math.random() * 10000)}`,
       subscriberName: patient.name,
@@ -133,7 +162,7 @@ export const generatePatientDetails = (patientId: string, allPatients?: PatientB
     medications: [],
     activityLog: [
       {
-        id: "1",
+        id: patientId,
         timestamp: new Date(baseTime - 60 * 60 * 1000).toISOString(),
         nurse: "Admission Staff",
         action: "Patient admitted to unit",
@@ -142,47 +171,44 @@ export const generatePatientDetails = (patientId: string, allPatients?: PatientB
         priority: "medium",
       },
     ],
-    nursingNotes: patient.nursingNotes.map((note, index) => ({
-      id: `note-${patient.id}-${index}`,
-      timestamp: new Date(baseTime - (index + 1) * 60 * 60 * 1000).toISOString(),
-      nurse: "Admission Staff",
-      note,
-      category: "admission",
-    })),
+    nursingNotes: patient.nursingNotes,
+    detailedNursingNotes: [],
     lastModified: {
       by: "System",
       at: new Date(baseTime - 60 * 60 * 1000).toISOString(),
       changes: ["Patient admitted"],
     },
-  }
-}
+  };
+};
 
 // Utility functions
 export const sortPatientsByPriority = (patients: PatientBasic[]) => {
   return [...patients].sort((a, b) => {
-    if (a.riskLevel === "critical" && b.riskLevel !== "critical") return -1
-    if (b.riskLevel === "critical" && a.riskLevel !== "critical") return 1
+    if (a.riskLevel === "critical" && b.riskLevel !== "critical") return -1;
+    if (b.riskLevel === "critical" && a.riskLevel !== "critical") return 1;
     if (a.acuityLevel !== b.acuityLevel) {
-      return b.acuityLevel - a.acuityLevel
+      return b.acuityLevel - a.acuityLevel;
     }
-    if (a.hasAlerts && !b.hasAlerts) return -1
-    if (b.hasAlerts && !a.hasAlerts) return 1
-    const riskOrder = { critical: 4, high: 3, medium: 2, low: 1 }
+    if (a.hasAlerts && !b.hasAlerts) return -1;
+    if (b.hasAlerts && !a.hasAlerts) return 1;
+    const riskOrder = { critical: 4, high: 3, medium: 2, low: 1 };
     if (a.riskLevel !== b.riskLevel) {
-      return riskOrder[b.riskLevel] - riskOrder[a.riskLevel]
+      return riskOrder[b.riskLevel] - riskOrder[a.riskLevel];
     }
-    return a.name.localeCompare(b.name)
-  })
-}
+    return a.name.localeCompare(b.name);
+  });
+};
 
 export const getCriticalCount = (patients: PatientBasic[]) => {
-  return patients.filter((p) => p.riskLevel === "critical" || p.acuityLevel >= 4).length
-}
+  return patients.filter(
+    (p) => p.riskLevel === "critical" || p.acuityLevel >= 4
+  ).length;
+};
 
 export const getShiftStatus = () => {
-  const now = new Date()
-  const hour = now.getHours()
-  if (hour >= 7 && hour < 19) return "day"
-  if (hour >= 19 && hour < 23) return "evening"
-  return "night"
-}
+  const now = new Date();
+  const hour = now.getHours();
+  if (hour >= 7 && hour < 19) return "day";
+  if (hour >= 19 && hour < 23) return "evening";
+  return "night";
+};

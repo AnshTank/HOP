@@ -1,30 +1,40 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
-import { X, Save, Pill } from "lucide-react"
-import type { PatientMedication } from "@/types/patient"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { X, Save, Pill } from "lucide-react";
+import type { PatientMedication } from "@/types/patient";
 
 interface AddMedicationModalProps {
-  isOpen: boolean
-  onClose: () => void
+  isOpen: boolean;
+  onClose: () => void;
   onAddMedication: (
     medication: Omit<PatientMedication, "id" | "addedBy" | "addedAt">,
     nurseInitials: string,
-    nurseName: string,
-  ) => Promise<void>
+    nurseName: string
+  ) => Promise<void>;
 }
 
-export function AddMedicationModal({ isOpen, onClose, onAddMedication }: AddMedicationModalProps) {
-  const [loading, setLoading] = useState(false)
-  const [nurseInitials, setNurseInitials] = useState("")
-  const [nurseName, setNurseName] = useState("")
+export function AddMedicationModal({
+  isOpen,
+  onClose,
+  onAddMedication,
+}: AddMedicationModalProps) {
+  const [loading, setLoading] = useState(false);
+  const [nurseInitials, setNurseInitials] = useState("");
+  const [nurseName, setNurseName] = useState("");
   const [medication, setMedication] = useState({
     name: "",
     dosage: "",
@@ -34,24 +44,29 @@ export function AddMedicationModal({ isOpen, onClose, onAddMedication }: AddMedi
     prescriber: "",
     indication: "",
     status: "active" as const,
-  })
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!nurseInitials.trim() || !nurseName.trim()) {
-      alert("Please enter your initials and full name")
-      return
+      alert("Please enter your initials and full name");
+      return;
     }
 
-    if (!medication.name || !medication.dosage || !medication.route || !medication.frequency) {
-      alert("Please fill in all required medication fields")
-      return
+    if (
+      !medication.name ||
+      !medication.dosage ||
+      !medication.route ||
+      !medication.frequency
+    ) {
+      alert("Please fill in all required medication fields");
+      return;
     }
 
-    setLoading(true)
+    setLoading(true);
     try {
-      await onAddMedication(medication, nurseInitials, nurseName)
+      await onAddMedication(medication, nurseInitials, nurseName);
 
       // Reset form
       setMedication({
@@ -63,20 +78,20 @@ export function AddMedicationModal({ isOpen, onClose, onAddMedication }: AddMedi
         prescriber: "",
         indication: "",
         status: "active",
-      })
-      setNurseInitials("")
-      setNurseName("")
+      });
+      setNurseInitials("");
+      setNurseName("");
 
-      onClose()
+      onClose();
     } catch (error) {
-      console.error("Error adding medication:", error)
-      alert("Failed to add medication. Please try again.")
+      console.error("Error adding medication:", error);
+      alert("Failed to add medication. Please try again.");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center overflow-y-auto">
@@ -86,7 +101,11 @@ export function AddMedicationModal({ isOpen, onClose, onAddMedication }: AddMedi
             <Pill className="w-6 h-6" />
             Add New Medication
           </h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-800" disabled={loading}>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-800"
+            disabled={loading}
+          >
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -124,7 +143,9 @@ export function AddMedicationModal({ isOpen, onClose, onAddMedication }: AddMedi
               <Input
                 id="medName"
                 value={medication.name}
-                onChange={(e) => setMedication((prev) => ({ ...prev, name: e.target.value }))}
+                onChange={(e) =>
+                  setMedication((prev) => ({ ...prev, name: e.target.value }))
+                }
                 placeholder="e.g., Metoprolol"
                 required
               />
@@ -135,7 +156,9 @@ export function AddMedicationModal({ isOpen, onClose, onAddMedication }: AddMedi
               <Input
                 id="dosage"
                 value={medication.dosage}
-                onChange={(e) => setMedication((prev) => ({ ...prev, dosage: e.target.value }))}
+                onChange={(e) =>
+                  setMedication((prev) => ({ ...prev, dosage: e.target.value }))
+                }
                 placeholder="e.g., 25mg"
                 required
               />
@@ -145,7 +168,9 @@ export function AddMedicationModal({ isOpen, onClose, onAddMedication }: AddMedi
               <Label htmlFor="route">Route *</Label>
               <Select
                 value={medication.route}
-                onValueChange={(value) => setMedication((prev) => ({ ...prev, route: value }))}
+                onValueChange={(value) =>
+                  setMedication((prev) => ({ ...prev, route: value }))
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select route" />
@@ -167,7 +192,9 @@ export function AddMedicationModal({ isOpen, onClose, onAddMedication }: AddMedi
               <Label htmlFor="frequency">Frequency *</Label>
               <Select
                 value={medication.frequency}
-                onValueChange={(value) => setMedication((prev) => ({ ...prev, frequency: value }))}
+                onValueChange={(value) =>
+                  setMedication((prev) => ({ ...prev, frequency: value }))
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select frequency" />
@@ -193,7 +220,12 @@ export function AddMedicationModal({ isOpen, onClose, onAddMedication }: AddMedi
                 id="nextDue"
                 type="datetime-local"
                 value={medication.nextDue}
-                onChange={(e) => setMedication((prev) => ({ ...prev, nextDue: e.target.value }))}
+                onChange={(e) =>
+                  setMedication((prev) => ({
+                    ...prev,
+                    nextDue: e.target.value,
+                  }))
+                }
               />
             </div>
 
@@ -202,7 +234,12 @@ export function AddMedicationModal({ isOpen, onClose, onAddMedication }: AddMedi
               <Input
                 id="prescriber"
                 value={medication.prescriber}
-                onChange={(e) => setMedication((prev) => ({ ...prev, prescriber: e.target.value }))}
+                onChange={(e) =>
+                  setMedication((prev) => ({
+                    ...prev,
+                    prescriber: e.target.value,
+                  }))
+                }
                 placeholder="e.g., Dr. Smith"
               />
             </div>
@@ -213,7 +250,12 @@ export function AddMedicationModal({ isOpen, onClose, onAddMedication }: AddMedi
             <Textarea
               id="indication"
               value={medication.indication}
-              onChange={(e) => setMedication((prev) => ({ ...prev, indication: e.target.value }))}
+              onChange={(e) =>
+                setMedication((prev) => ({
+                  ...prev,
+                  indication: e.target.value,
+                }))
+              }
               placeholder="e.g., Hypertension, Pain management"
               className="min-h-20"
             />
@@ -221,10 +263,19 @@ export function AddMedicationModal({ isOpen, onClose, onAddMedication }: AddMedi
 
           {/* Submit Buttons */}
           <div className="flex justify-end gap-4 pt-6 border-t">
-            <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              disabled={loading}
+            >
               Cancel
             </Button>
-            <Button type="submit" className="bg-green-600 text-white hover:bg-green-700" disabled={loading}>
+            <Button
+              type="submit"
+              className="bg-green-600 text-white hover:bg-green-700"
+              disabled={loading}
+            >
               <Save className="w-5 h-5 mr-1" />
               {loading ? "Adding..." : "Add Medication"}
             </Button>
@@ -232,9 +283,9 @@ export function AddMedicationModal({ isOpen, onClose, onAddMedication }: AddMedi
         </form>
       </div>
     </div>
-  )
+  );
 }
 
 // Also keep the named export for flexibility
 
-export default AddMedicationModal
+export default AddMedicationModal;

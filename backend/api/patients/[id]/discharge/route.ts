@@ -1,28 +1,36 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { patients, patientStatuses } from "@/backend/lib/patient-data"
+import { type NextRequest, NextResponse } from "next/server";
+import {
+  mockPatients as patients,
+  mockPatientStatuses as patientStatuses,
+} from "@/backend/lib/patient-data";
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
-    const { id } = params
-    const body = await request.json()
-    const { nurseInitials, nurseName, dischargeTime, dischargeNotes } = body
+    const { id } = params;
+    const body = await request.json();
+    const { nurseInitials, nurseName, dischargeTime, dischargeNotes } = body;
 
     // Find the patient
-    const patientIndex = patients.findIndex((p) => p.id === id)
+    const patientIndex = patients.findIndex((p) => p.id === id);
     if (patientIndex === -1) {
-      return NextResponse.json({ error: "Patient not found" }, { status: 404 })
+      return NextResponse.json({ error: "Patient not found" }, { status: 404 });
     }
 
-    const patient = patients[patientIndex]
+    const patient = patients[patientIndex];
 
     // Log the discharge activity
-    console.log(`Patient ${patient.name} (ID: ${id}) discharged by ${nurseName} at ${dischargeTime}`)
+    console.log(
+      `Patient ${patient.name} (ID: ${id}) discharged by ${nurseName} at ${dischargeTime}`
+    );
 
     // Remove patient from the system
-    patients.splice(patientIndex, 1)
+    patients.splice(patientIndex, 1);
 
     // Remove patient status
-    delete patientStatuses[id]
+    delete patientStatuses[id];
 
     return NextResponse.json({
       success: true,
@@ -34,9 +42,12 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
         dischargedBy: nurseName,
         notes: dischargeNotes,
       },
-    })
+    });
   } catch (error) {
-    console.error("Error discharging patient:", error)
-    return NextResponse.json({ error: "Failed to discharge patient" }, { status: 500 })
+    console.error("Error discharging patient:", error);
+    return NextResponse.json(
+      { error: "Failed to discharge patient" },
+      { status: 500 }
+    );
   }
 }

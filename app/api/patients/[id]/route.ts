@@ -1,43 +1,42 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { generatePatientDetails } from "@/lib/patient-data";
-
-// Mock patient data (should come from DB in real apps)
-import { mockPatients, mockPatientStatuses } from "@/lib/patient-data";
-let patients: any[] = [...mockPatients];
-let patientStatuses: any = { ...mockPatientStatuses };
+import { connectDB } from "@/backend/Users";
+import Patient from "@/backend/models/PatientSchema";
+import "@/backend/models/NursingSchema";
+import "@/backend/models/MedicationSchema";
+import "@/backend/models/VitalsSchema";
+import "@/backend/models/ActivityLogSchema";
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const { id } = await params;
-  const patientId = id;
-
-  // Try to refresh data from main API
   try {
-    const patientsResponse = await fetch(
-      `${request.nextUrl.origin}/api/patients`
-    );
-    if (patientsResponse.ok) {
-      const data = await patientsResponse.json();
-      patients = data.patients;
-      patientStatuses = data.statuses;
+    await connectDB();
+    const { id } = await params;
+
+    // Use correct field names for populate
+    const patient = await Patient.findById(id)
+      .populate("medications")
+      .populate("vitals")
+      .populate("nursingNotes")
+      .populate("activityLog");
+
+    if (!patient) {
+      return NextResponse.json(
+        {
+          error: "Patient not found",
+          message: `Patient with ID ${id} does not exist`,
+        },
+        { status: 404 }
+      );
     }
-  } catch (fetchError) {
-    console.log("Could not fetch updated patients list, using current data");
-  }
 
-  const patientDetails = generatePatientDetails(patientId, patients);
-
-  if (!patientDetails) {
+    return NextResponse.json(patient);
+  } catch (error) {
+    console.error("Error fetching patient:", error);
     return NextResponse.json(
-      {
-        error: "Patient not found",
-        message: `Patient with ID ${patientId} does not exist`,
-      },
-      { status: 404 }
+      { error: "Failed to fetch patient" },
+      { status: 500 }
     );
   }
-
-  return NextResponse.json(patientDetails);
 }

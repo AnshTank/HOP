@@ -39,7 +39,18 @@ import type {
 import UpdateVitalsModal from "./update-vitals-modal";
 import AddMedicationModal from "./add-medication-modal";
 import PatientDetailsAIModal from "./patient-details-ai-modal";
-import Clock2 from "./clock";
+import Clock2 from "@/components/clock";
+import { getShiftStatus } from "@/lib/patient-data";
+const shift = getShiftStatus();
+import { EditPatientModal } from "./edit-patient-modal";
+import { AddPatientRequest } from "@/types/patient";
+// const getShiftStatus = () => {
+//   const now = new Date();
+//   const hour = now.getHours();
+//   if (hour >= 6 && hour < 14) return "day";
+//   if (hour >= 14 && hour < 22) return "evening";
+//   return "night";
+// };
 
 interface PatientDetailsClientProps {
   patientId: string;
@@ -59,6 +70,8 @@ export default function PatientDetailsClient({
   const [showDischargeConfirm, setShowDischargeConfirm] = useState(false);
   const [discharging, setDischarging] = useState(false);
   const [currentNurse] = useState("Sarah RN");
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchPatientDetails();
@@ -142,9 +155,7 @@ export default function PatientDetailsClient({
       }
 
       const data = await response.json();
-      setPatient((prev) =>
-        prev ? { ...prev, vitals: data.patient.vitals } : data.patient
-      );
+      setPatient(data.patient); // <-- update entire patient, including activityLog
       setShowVitalsModal(false);
     } catch (error) {
       console.error("Error updating vitals:", error);
@@ -173,6 +184,7 @@ export default function PatientDetailsClient({
             ? {
                 ...prev,
                 medications: [...prev.medications, data.medication],
+                activityLog: data.activityLog || prev.activityLog,
               }
             : prev
         );
@@ -210,30 +222,32 @@ export default function PatientDetailsClient({
       const data = await res.json();
       console.log("Update response:", data);
 
-      //  – Discontinue: remove immediately
+      //Discontinue: remove immediately
       if (action === "discontinued") {
         setPatient((prev) =>
           prev
             ? {
                 ...prev,
                 medications: prev.medications.filter(
-                  (m) => m.id !== medicationId
+                  (m) => m._id !== medicationId
                 ),
+                activityLog: data.activityLog || prev.activityLog,
               }
             : prev
         );
         return;
       }
 
-      //  – Otherwise update in place
+      //Otherwise update in place
       const updatedMed: PatientMedication = data.medication;
       setPatient((prev) =>
         prev
           ? {
               ...prev,
               medications: prev.medications.map((m) =>
-                m.id === updatedMed.id ? updatedMed : m
+                m._id === updatedMed._id ? updatedMed : m
               ),
+              activityLog: data.activityLog || prev.activityLog,
             }
           : prev
       );
@@ -243,35 +257,47 @@ export default function PatientDetailsClient({
     }
   };
 
-  const handleAddNursingNote = () => {
+  const handleAddOrUpdateNursingNote = async () => {
     if (!newNursingNote.trim() || !patient) return;
 
-    const newNote: NursingNote = {
-      id: Date.now().toString(),
-      timestamp: new Date().toISOString(),
-      nurse: currentNurse,
-      note: newNursingNote,
-      category: "general",
-    };
+    try {
+      const url = editingNoteId
+        ? `/api/patients/${patientId}/nursing-notes/${editingNoteId}`
+        : `/api/patients/${patientId}/nursing-notes`;
+      const method = editingNoteId ? "PUT" : "POST";
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nurse: currentNurse,
+          note: newNursingNote,
+          category: "general",
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to save nursing note");
+      const data = await res.json();
 
-    setPatient((prev) =>
-      prev
-        ? {
-            ...prev,
-            nursingNotes: [newNote, ...prev.nursingNotes],
-          }
-        : null
-    );
-
-    setNewNursingNote("");
+      setPatient((prev) =>
+        prev
+          ? {
+              ...prev,
+              nursingNotes: data.patient.nursingNotes,
+            }
+          : prev
+      );
+      setNewNursingNote("");
+      setEditingNoteId(null);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to save nursing note. Please try again.");
+    }
   };
 
-  const getShiftStatus = () => {
-    const now = new Date();
-    const hour = now.getHours();
-    if (hour >= 7 && hour < 19) return "day";
-    if (hour >= 19 && hour < 23) return "evening";
-    return "night";
+  const handleEditPatient = async (updatedPatient: Partial<PatientDetails>) => {
+    // Call your API to update the patient
+    // After success, update local state and close modal
+    setPatient((prev) => (prev ? { ...prev, ...updatedPatient } : prev));
+    setShowEditModal(false);
   };
 
   const getTimeAgo = (timestamp: string) => {
@@ -450,22 +476,23 @@ export default function PatientDetailsClient({
               <span className="hidden md:inline">•</span>
               <div className="flex items-center gap-1 whitespace-nowrap">
                 <Calendar className="h-4 w-4" />
-                <span>Age {patient.demographics.age}</span>
+                <span>
+                  Age {patient.demographics?.age ?? patient.age ?? "N/A"}
+                </span>
               </div>
               <span className="hidden md:inline">•</span>
               <span className="truncate">{patient.primaryDiagnosis}</span>
             </div>
             {/* Right: Actions */}
             <div className="flex flex-wrap items-center gap-4 justify-end mt-4 md:mt-0">
-              <div className="flex items-center gap-2 bg-white/60 rounded-2xl px-5 py-2 min-w-[160px]">
+              <div className="flex items-center gap-2 bg-white/60 rounded-2xl px-4 py-2 min-w-[140px]">
                 <Clock className="h-4 w-4 flex-shrink-0" />
                 <Clock2 />
               </div>
 
-              <Badge className="bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-2xl px-5 py-2 capitalize min-w-[110px] text-center text-base">
-                {getShiftStatus()} Shift
+              <Badge className="bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-2xl px-4 py-2 capitalize min-w-[100px] text-center">
+                {shift} Shift
               </Badge>
-
               <Button
                 onClick={() => setShowAIAssistant(true)}
                 className="bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white rounded-2xl px-8 py-3 shadow-lg hover:shadow-xl transition-all duration-200 font-medium flex items-center gap-2 text-base"
@@ -487,7 +514,7 @@ export default function PatientDetailsClient({
         </div>
       </header>
 
-      {/* Floating AI Assistant Button
+      {/* Floating AI Assistant Button 
       <div className="fixed bottom-8 right-8 z-50">
         <Button
           onClick={() => setShowAIAssistant(true)}
@@ -499,7 +526,7 @@ export default function PatientDetailsClient({
             <span className="text-xs font-bold">AI</span>
           </div>
         </Button>
-      </div> */}
+      </div> 
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-8">
@@ -563,27 +590,39 @@ export default function PatientDetailsClient({
                     <div>
                       <p className="text-gray-500">Date of Birth</p>
                       <p className="font-medium">
-                        {new Date(
-                          patient.demographics.dateOfBirth
-                        ).toLocaleDateString()}
+                        {patient.demographics?.dateOfBirth
+                          ? new Date(
+                              patient.demographics.dateOfBirth
+                            ).toLocaleDateString()
+                          : patient.age
+                          ? new Date(
+                              Date.now() -
+                                patient.age * 365.25 * 24 * 60 * 60 * 1000
+                            ).toLocaleDateString()
+                          : "N/A"}
                       </p>
                     </div>
                     <div>
                       <p className="text-gray-500">Age</p>
                       <p className="font-medium">
-                        {patient.demographics.age} years
+                        {patient.demographics?.age ?? patient.age ?? "N/A"}{" "}
+                        years
                       </p>
                     </div>
                     <div>
                       <p className="text-gray-500">Gender</p>
                       <p className="font-medium">
-                        {patient.demographics.gender}
+                        {patient.demographics?.gender ??
+                          patient.gender ??
+                          "N/A"}
                       </p>
                     </div>
                     <div>
                       <p className="text-gray-500">Marital Status</p>
                       <p className="font-medium">
-                        {patient.demographics.maritalStatus}
+                        {patient.demographics?.maritalStatus ??
+                          patient.maritalStatus ??
+                          "N/A"}
                       </p>
                     </div>
                   </div>
@@ -624,6 +663,18 @@ export default function PatientDetailsClient({
                 </CardContent>
               </Card>
             </div>
+
+            {/* Add this block at the end of the overview tab */}
+            <div className="flex justify-end mt-8">
+              <Button
+                className="bg-white border border-gray-200 text-gray-700 rounded-2xl px-8 py-3 shadow hover:bg-gray-50 transition font-medium flex items-center gap-2 text-base"
+                onClick={() => setShowEditModal(true)}
+                type="button"
+              >
+                <Edit className="h-5 w-5" />
+                Edit Profile
+              </Button>
+            </div>
           </TabsContent>
 
           <TabsContent value="vitals">
@@ -648,7 +699,8 @@ export default function PatientDetailsClient({
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {Object.keys(patient.vitals).length === 0 ? (
+                  {!patient.vitals ||
+                  Object.keys(patient.vitals).length === 0 ? (
                     <div className="text-center py-8 text-gray-500">
                       <Thermometer className="h-12 w-12 mx-auto mb-4 opacity-50" />
                       <p className="text-lg font-medium">
@@ -766,7 +818,7 @@ export default function PatientDetailsClient({
                   ) : (
                     <ul className="space-y-3">
                       {patient.medications.map((med) => (
-                        <li key={med.id}>
+                        <li key={med._id ?? med._id}>
                           <div
                             className={`bg-white/80 rounded-2xl p-3 border-l-4 ${
                               med.status === "held"
@@ -815,7 +867,7 @@ export default function PatientDetailsClient({
                                     variant="outline"
                                     size="sm"
                                     onClick={() =>
-                                      handleMedicationAction(med.id, "given")
+                                      handleMedicationAction(med._id, "given")
                                     }
                                     className="rounded-xl text-xs"
                                   >
@@ -829,7 +881,7 @@ export default function PatientDetailsClient({
                                     variant="outline"
                                     size="sm"
                                     onClick={() =>
-                                      handleMedicationAction(med.id, "held")
+                                      handleMedicationAction(med._id, "held")
                                     }
                                     className="rounded-xl text-xs"
                                   >
@@ -844,7 +896,7 @@ export default function PatientDetailsClient({
                                   size="sm"
                                   onClick={() =>
                                     handleMedicationAction(
-                                      med.id,
+                                      med._id,
                                       "discontinued"
                                     )
                                   }
@@ -903,12 +955,12 @@ export default function PatientDetailsClient({
                       className="min-h-24 rounded-2xl"
                     />
                     <Button
-                      onClick={handleAddNursingNote}
+                      onClick={handleAddOrUpdateNursingNote}
                       disabled={!newNursingNote.trim()}
                       className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white rounded-2xl"
                     >
                       <Save className="h-4 w-4 mr-2" />
-                      Add Note
+                      {editingNoteId ? "Update Note" : "Add Note"}
                     </Button>
                   </div>
                 </CardContent>
@@ -927,9 +979,9 @@ export default function PatientDetailsClient({
                 <CardContent>
                   <ScrollArea className="h-96 hide-scrollbar">
                     <div className="space-y-4">
-                      {patient.nursingNotes.map((note) => (
+                      {patient.nursingNotes.map((note, idx) => (
                         <div
-                          key={note.id}
+                          key={note._id ?? idx}
                           className="bg-white/80 rounded-2xl p-4 border"
                         >
                           <div className="flex justify-between items-start mb-2">
@@ -1034,6 +1086,13 @@ export default function PatientDetailsClient({
           patient={patient}
         />
       )}
+
+      <EditPatientModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        patient={patient}
+        onEditPatient={handleEditPatient}
+      />
     </div>
   );
 }
