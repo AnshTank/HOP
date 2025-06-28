@@ -232,12 +232,6 @@ export function WarmPatientCard({
               🧤 Contact Precautions
             </Badge>
           )}
-
-          {status.hasNewOrders && (
-            <Badge className="bg-orange-100 text-orange-800 border-orange-300 rounded-xl">
-              📝 New Orders
-            </Badge>
-          )}
         </div>
 
         {/* Quick Info Grid */}
