@@ -138,7 +138,23 @@ Visit `http://localhost:3000` to view the application.
 
 ---
 
-## ✅ Milestones
+## ✅ Milestones 🗂️🚀
+
+| 🏁 Status | 🛠️ Milestone | 🔍 What Was Done |
+|----------|--------------|------------------|
+| ✅ | 📚 **Requirements & Research Completed** | Finalized the real-world problem of nurse shift handoff. Outlined key AI/NLP goals and user workflow. |
+| ✅ | 🧠 **AI Bot Design Finalized** | Designed context-aware logic for converting brief nurse inputs into complete shift summaries. |
+| ✅ | 🧪 **Patient Modal & Input Form Built** | Developed a modal form with sections: Basic Info, Risk Assessment, Allergies, Status Flags, and Initial Notes using React + Tailwind. |
+| ✅ | ⚙️ **Backend Integration Done** | Integrated frontend with backend using Express and MongoDB. APIs built for patient management. |
+| ✅ | 🧬 **Local NLP Engine Implemented** | Built a basic NLP parser (no OpenAI) for summarizing patient data into structured handoff notes. |
+| ✅ | 💬 **Shift Summary Generation Enabled** | AI generates full handoff summary from short user input, ensuring critical details are never missed. |
+| ✅ | 🛡️ **Cross-Validation Added** | Ensured system checks for missing data like risk flags, allergies, and other key fields. |
+| ✅ | 🎨 **UI Polished & Made Accessible** | Finalized a clean, responsive UI with improved contrast and clarity for nurses under shift pressure. |
+| ✅ | 📦 **Testing Completed** | Validated edge cases, form validations, and summary generation with real and dummy patient inputs. |
+| ✅ | 🔒 **Secured & Deployment Ready** | Backend endpoints secured, token-based access setup. Code deployed on Vercel + MongoDB Atlas. |
+| ✅ | 🚀 **Live Demo Hosted** | Project is now live with complete handoff workflow available end-to-end. |
+| ✅ | 📄 **Documentation & Presentation Ready** | README.md written, license added, and demo walkthrough/video completed. Ready for academic submission. |
+
 
 - ***
 
