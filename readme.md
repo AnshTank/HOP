@@ -155,6 +155,7 @@ Visit `http://localhost:3000` to view the application.
 | ✅ | 🚀 **Live Demo Hosted** | Project is now live with complete handoff workflow available end-to-end. |
 | ✅ | 📄 **Documentation & Presentation Ready** | README.md written, license added, and demo walkthrough/video completed. Ready for academic submission. |
 
+---
 
 ## 👨‍⚕️ Authors
 
