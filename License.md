@@ -1,4 +1,5 @@
 MIT License
+
 HOP-11: Nurse Shift Handoff Companion License
 Copyright (c) 2025 Ansh Tank
 
