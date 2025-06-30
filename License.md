@@ -1,4 +1,4 @@
-MIT License
+Custom Academic Use License – Based on MIT License
 
 HOP-11: Nurse Shift Handoff Companion License
 Copyright (c) 2025 Ansh Tank
@@ -11,7 +11,7 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 4. The Software is provided "as is", without warranty of any kind, express or implied.
 
 FOR COLLABORATION & PERMISSION REQUESTS, CONTACT:
-📧 ansh.tank@example.com (replace with your real email)
+📧 anshtank9@gmail.com
 
 THIS LICENSE DOES NOT GRANT ANY RIGHTS TO USE TRADEMARKS, LOGOS, OR ANY OTHER INTELLECTUAL PROPERTY OF THE AUTHOR.
 
